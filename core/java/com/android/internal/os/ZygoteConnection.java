@@ -820,8 +820,8 @@ class ZygoteConnection {
                     VMRuntime.getCurrentInstructionSet(),
                     pipeFd, parsedArgs.remainingArgs);
         } else {
-            ZygoteInit.zygoteInit(parsedArgs.targetSdkVersion,
-                    parsedArgs.remainingArgs, null /* classLoader */);
+            ExecInit.execApplication(parsedArgs.niceName, parsedArgs.targetSdkVersion,
+                    VMRuntime.getCurrentInstructionSet(), parsedArgs.remainingArgs);
         }
     }
 
