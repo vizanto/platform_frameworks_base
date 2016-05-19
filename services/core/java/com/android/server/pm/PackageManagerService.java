@@ -12760,8 +12760,8 @@ public class PackageManagerService extends IPackageManager.Stub
         boolean allowed = (compareSignatures(
                 bp.packageSetting.signatures.mSignatures, pkg.mSignatures)
                         == PackageManager.SIGNATURE_MATCH)
-                || (compareSignatures(mPlatformPackage.mSignatures, pkg.mSignatures)
-                        == PackageManager.SIGNATURE_MATCH);
+                || ((compareSignatures(mPlatformPackage.mSignatures, pkg.mSignatures)
+                        == PackageManager.SIGNATURE_MATCH) && isSystemApp(pkg));
         if (!allowed && privilegedPermission) {
             if (isSystemApp(pkg)) {
                 // For updated system applications, a system permission
