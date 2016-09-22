@@ -8667,6 +8667,9 @@ public final class Settings {
         /** @hide */
         public static String getStringForUser(ContentResolver resolver, String name,
                 int userHandle) {
+            if (WEBVIEW_MULTIPROCESS.equals(name)) {
+                return "1";
+            }
             if (MOVED_TO_SECURE.contains(name)) {
                 Log.w(TAG, "Setting " + name + " has moved from android.provider.Settings.Global"
                         + " to android.provider.Settings.Secure, returning read-only value.");
