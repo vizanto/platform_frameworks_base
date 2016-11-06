@@ -824,8 +824,13 @@ class ZygoteConnection {
                     VMRuntime.getCurrentInstructionSet(),
                     pipeFd, parsedArgs.remainingArgs);
         } else {
-            ExecInit.execApplication(parsedArgs.niceName, parsedArgs.targetSdkVersion,
-                    VMRuntime.getCurrentInstructionSet(), parsedArgs.debugFlags, parsedArgs.remainingArgs);
+            if ("com.android.systemui".equals(parsedArgs.niceName)) {
+                ZygoteInit.zygoteInit(parsedArgs.targetSdkVersion,
+                        parsedArgs.remainingArgs, null /* classLoader */);
+            } else {
+                ExecInit.execApplication(parsedArgs.niceName, parsedArgs.targetSdkVersion,
+                        VMRuntime.getCurrentInstructionSet(), parsedArgs.debugFlags, parsedArgs.remainingArgs);
+            }
         }
     }
 
