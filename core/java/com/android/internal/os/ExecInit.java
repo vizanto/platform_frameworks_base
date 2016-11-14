@@ -16,6 +16,7 @@
 
 package com.android.internal.os;
 
+import dalvik.system.PathClassLoader;
 import dalvik.system.VMRuntime;
 import dalvik.system.ZygoteHooks;
 import android.system.ErrnoException;
@@ -48,6 +49,17 @@ public class ExecInit {
             // Parse our mandatory argument.
             int targetSdkVersion = Integer.parseInt(args[0], 10);
             int debugFlags = Integer.parseInt(args[1], 10);
+            boolean isSystemServer = Boolean.parseBoolean(args[2]);
+
+            ClassLoader cl = null;
+            if (isSystemServer) {
+                final String systemServerClasspath = Os.getenv("SYSTEMSERVERCLASSPATH");
+                if (systemServerClasspath != null) {
+                    cl = ZygoteInit.createSystemServerClassLoader(systemServerClasspath,
+                            targetSdkVersion);
+                    Thread.currentThread().setContextClassLoader(cl);
+                }
+            }
 
             // Mimic Zygote preloading.
             ZygoteInit.preload();
@@ -55,8 +67,8 @@ public class ExecInit {
             VM_HOOKS.postExec(debugFlags);
 
             // Launch the application.
-            String[] runtimeArgs = new String[args.length - 2];
-            System.arraycopy(args, 2, runtimeArgs, 0, runtimeArgs.length);
+            String[] runtimeArgs = new String[args.length - 3];
+            System.arraycopy(args, 3, runtimeArgs, 0, runtimeArgs.length);
             RuntimeInit.execInit(targetSdkVersion, runtimeArgs, cl);
         } catch (ZygoteInit.MethodAndArgsCaller caller) {
             caller.run();
@@ -72,9 +84,9 @@ public class ExecInit {
      * @param args Arguments for {@link RuntimeInit#main}.
      */
     public static void execApplication(String niceName, int targetSdkVersion,
-            String instructionSet, int debugFlags, String[] args) {
+            String instructionSet, int debugFlags, boolean isSystemServer, String[] args) {
         int niceArgs = niceName == null ? 0 : 1;
-        int baseArgs = 6 + niceArgs;
+        int baseArgs = 7 + niceArgs;
         String[] argv = new String[baseArgs + args.length];
         if (VMRuntime.is64BitInstructionSet(instructionSet)) {
             argv[0] = "/system/bin/app_process64";
@@ -89,6 +101,7 @@ public class ExecInit {
         argv[3 + niceArgs] = "com.android.internal.os.ExecInit";
         argv[4 + niceArgs] = Integer.toString(targetSdkVersion);
         argv[5 + niceArgs] = Integer.toString(debugFlags);
+        argv[6 + niceArgs] = Boolean.toString(isSystemServer);
         System.arraycopy(args, 0, argv, baseArgs, args.length);
 
         try {
