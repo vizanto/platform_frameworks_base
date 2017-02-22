@@ -82,7 +82,12 @@ public class FlashlightController {
     public void setFlashlight(boolean enabled) {
         boolean pendingError = false;
         synchronized (this) {
-            if (mCameraId == null) return;
+            if (mCameraId == null) {
+                tryInitCamera();
+                if (mCameraId == null) {
+                    return;
+                }
+            }
             if (mFlashlightEnabled != enabled) {
                 mFlashlightEnabled = enabled;
                 try {
