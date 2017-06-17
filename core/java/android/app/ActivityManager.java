@@ -62,6 +62,7 @@ import android.os.UserHandle;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Size;
+import android.util.Slog;
 
 import org.xmlpull.v1.XmlSerializer;
 
@@ -3068,6 +3069,24 @@ public class ActivityManager {
         } catch (RemoteException e) {
             throw e.rethrowFromSystemServer();
         }
+    }
+
+    static public boolean isForegroundActivity(int uid, int pid) {
+        try {
+            List<RunningAppProcessInfo> procs =
+                    ActivityManagerNative.getDefault().getRunningAppProcesses();
+            int N = procs.size();
+            for (int i = 0; i < N; i++) {
+                RunningAppProcessInfo proc = procs.get(i);
+                if (proc.pid == pid && proc.uid == uid
+                        && proc.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                    return true;
+                }
+            }
+        } catch (RemoteException e) {
+            Slog.w(TAG, "am.getRunningAppProcesses() failed");
+        }
+        return false;
     }
 
     /**
