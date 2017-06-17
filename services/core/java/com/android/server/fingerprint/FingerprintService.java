@@ -61,7 +61,7 @@ import android.hardware.fingerprint.IFingerprintDaemonCallback;
 import android.hardware.fingerprint.IFingerprintServiceReceiver;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
-import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
+import static android.app.ActivityManager.isForegroundActivity;
 import static android.Manifest.permission.MANAGE_FINGERPRINT;
 import static android.Manifest.permission.RESET_FINGERPRINT_LOCKOUT;
 import static android.Manifest.permission.USE_FINGERPRINT;
@@ -483,24 +483,6 @@ public class FingerprintService extends SystemService implements IBinder.DeathRe
         } finally {
             Binder.restoreCallingIdentity(token);
         }
-    }
-
-    private boolean isForegroundActivity(int uid, int pid) {
-        try {
-            List<RunningAppProcessInfo> procs =
-                    ActivityManagerNative.getDefault().getRunningAppProcesses();
-            int N = procs.size();
-            for (int i = 0; i < N; i++) {
-                RunningAppProcessInfo proc = procs.get(i);
-                if (proc.pid == pid && proc.uid == uid
-                        && proc.importance == IMPORTANCE_FOREGROUND) {
-                    return true;
-                }
-            }
-        } catch (RemoteException e) {
-            Slog.w(TAG, "am.getRunningAppProcesses() failed");
-        }
-        return false;
     }
 
     /**
