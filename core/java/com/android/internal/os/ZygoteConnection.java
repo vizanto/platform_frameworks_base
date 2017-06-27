@@ -821,7 +821,7 @@ class ZygoteConnection {
                     pipeFd, parsedArgs.remainingArgs);
         } else {
             ExecInit.execApplication(parsedArgs.niceName, parsedArgs.targetSdkVersion,
-                    VMRuntime.getCurrentInstructionSet(), parsedArgs.remainingArgs);
+                    VMRuntime.getCurrentInstructionSet(), parsedArgs.debugFlags, parsedArgs.remainingArgs);
         }
     }
 
