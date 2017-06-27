@@ -6,12 +6,15 @@ import android.system.Os;
 import android.util.BootTimingsTraceLog;
 import android.util.Slog;
 import dalvik.system.VMRuntime;
+import dalvik.system.ZygoteHooks;
 
 /**
  * Startup class for the process.
  * @hide
  */
 public class ExecInit {
+    private static final ZygoteHooks VM_HOOKS = new ZygoteHooks();
+
     /**
      * Class not instantiable.
      */
@@ -31,14 +34,17 @@ public class ExecInit {
         try {
             // Parse our mandatory argument.
             int targetSdkVersion = Integer.parseInt(args[0], 10);
+            int debugFlags = Integer.parseInt(args[1], 10);
 
             // Mimic system Zygote preloading.
             ZygoteInit.preload(new BootTimingsTraceLog("ExecInitTiming",
                     Trace.TRACE_TAG_DALVIK));
 
+            VM_HOOKS.postExec(debugFlags);
+
             // Launch the application.
-            String[] runtimeArgs = new String[args.length - 1];
-            System.arraycopy(args, 1, runtimeArgs, 0, runtimeArgs.length);
+            String[] runtimeArgs = new String[args.length - 2];
+            System.arraycopy(args, 2, runtimeArgs, 0, runtimeArgs.length);
             ExecInit.execInit(targetSdkVersion, runtimeArgs);
         } catch (Zygote.MethodAndArgsCaller caller) {
             caller.run();
@@ -54,9 +60,9 @@ public class ExecInit {
      * @param args Arguments for {@link RuntimeInit#main}.
      */
     public static void execApplication(String niceName, int targetSdkVersion,
-            String instructionSet, String[] args) {
+            String instructionSet, int debugFlags, String[] args) {
         int niceArgs = niceName == null ? 0 : 1;
-        int baseArgs = 5 + niceArgs;
+        int baseArgs = 6 + niceArgs;
         String[] argv = new String[baseArgs + args.length];
         if (VMRuntime.is64BitInstructionSet(instructionSet)) {
             argv[0] = "/system/bin/app_process64";
@@ -70,6 +76,7 @@ public class ExecInit {
         }
         argv[3 + niceArgs] = "com.android.internal.os.ExecInit";
         argv[4 + niceArgs] = Integer.toString(targetSdkVersion);
+        argv[5 + niceArgs] = Integer.toString(debugFlags);
         System.arraycopy(args, 0, argv, baseArgs, args.length);
 
         WrapperInit.preserveCapabilities();
