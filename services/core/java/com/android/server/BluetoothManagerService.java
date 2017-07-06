@@ -280,9 +280,10 @@ class BluetoothManagerService extends IBluetoothManager.Stub {
 
         mContext = context;
 
-        mPermissionReviewRequired = Build.PERMISSIONS_REVIEW_REQUIRED
-                    || context.getResources().getBoolean(
-                com.android.internal.R.bool.config_permissionReviewRequired);
+        //mPermissionReviewRequired = Build.PERMISSIONS_REVIEW_REQUIRED
+                    //|| context.getResources().getBoolean(
+                //com.android.internal.R.bool.config_permissionReviewRequired);
+        mPermissionReviewRequired = false;
 
         mActiveLogs = new LinkedList<ActiveLog>();
         mBluetooth = null;
