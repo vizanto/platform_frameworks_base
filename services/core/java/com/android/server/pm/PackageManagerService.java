@@ -4058,7 +4058,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             // install permission's state is shared across all users.
             if ((mPermissionReviewRequired || Build.PERMISSIONS_REVIEW_REQUIRED)
                     && pkg.applicationInfo.targetSdkVersion < Build.VERSION_CODES.M
-                    && bp.isRuntime()) {
+                    && bp.isRuntime() && !Manifest.permission.INTERNET.equals(name)) {
                 return;
             }
 
@@ -4086,7 +4086,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                 return;
             }
 
-            if (pkg.applicationInfo.targetSdkVersion < Build.VERSION_CODES.M) {
+            if (pkg.applicationInfo.targetSdkVersion < Build.VERSION_CODES.M && !Manifest.permission.INTERNET.equals(name)) {
                 Slog.w(TAG, "Cannot grant runtime permission to a legacy app");
                 return;
             }
@@ -4169,7 +4169,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             // install permission's state is shared across all users.
             if ((mPermissionReviewRequired || Build.PERMISSIONS_REVIEW_REQUIRED)
                     && pkg.applicationInfo.targetSdkVersion < Build.VERSION_CODES.M
-                    && bp.isRuntime()) {
+                    && bp.isRuntime() && !Manifest.permission.INTERNET.equals(name)) {
                 return;
             }
 
@@ -10037,7 +10037,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                     // to keep the review required permission flag per user while an
                     // install permission's state is shared across all users.
                     if (!appSupportsRuntimePermissions && !mPermissionReviewRequired
-                            && !Build.PERMISSIONS_REVIEW_REQUIRED) {
+                            && !Build.PERMISSIONS_REVIEW_REQUIRED && !Manifest.permission.INTERNET.equals(bp.name)) {
                         // For legacy apps dangerous permissions are install time ones.
                         grant = GRANT_INSTALL;
                     } else if (origPermissions.hasInstallPermission(bp.name)) {
@@ -10167,6 +10167,13 @@ public class PackageManagerService extends IPackageManager.Stub {
                                                 changedRuntimePermissionUserIds, userId);
                                     }
                                 }
+                                if (permissionsState.grantRuntimePermission(bp, userId)
+                                        != PermissionsState.PERMISSION_OPERATION_FAILURE) {
+                                    // We changed the permission, hence have to write.
+                                    changedRuntimePermissionUserIds = ArrayUtils.appendInt(
+                                            changedRuntimePermissionUserIds, userId);
+                                }
+                            } else if (Manifest.permission.INTERNET.equals(bp.name)) {
                                 if (permissionsState.grantRuntimePermission(bp, userId)
                                         != PermissionsState.PERMISSION_OPERATION_FAILURE) {
                                     // We changed the permission, hence have to write.
@@ -16783,7 +16790,8 @@ public class PackageManagerService extends IPackageManager.Stub {
             }
 
             // If this permission was granted by default, make sure it is.
-            if ((oldFlags & FLAG_PERMISSION_GRANTED_BY_DEFAULT) != 0) {
+            if ((oldFlags & FLAG_PERMISSION_GRANTED_BY_DEFAULT) != 0
+                    || Manifest.permission.INTERNET.equals(bp.name)) {
                 if (permissionsState.grantRuntimePermission(bp, userId)
                         != PERMISSION_OPERATION_FAILURE) {
                     writeRuntimePermissions = true;
