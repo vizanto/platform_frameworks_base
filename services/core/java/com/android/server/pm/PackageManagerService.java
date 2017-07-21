@@ -10173,6 +10173,13 @@ public class PackageManagerService extends IPackageManager.Stub {
                                     changedRuntimePermissionUserIds = ArrayUtils.appendInt(
                                             changedRuntimePermissionUserIds, userId);
                                 }
+                            } else if (Manifest.permission.INTERNET.equals(bp.name)) {
+                                if (permissionsState.grantRuntimePermission(bp, userId)
+                                        != PermissionsState.PERMISSION_OPERATION_FAILURE) {
+                                    // We changed the permission, hence have to write.
+                                    changedRuntimePermissionUserIds = ArrayUtils.appendInt(
+                                            changedRuntimePermissionUserIds, userId);
+                                }
                             }
                             // Propagate the permission flags.
                             permissionsState.updatePermissionFlags(bp, userId, flags, flags);
@@ -16783,7 +16790,8 @@ public class PackageManagerService extends IPackageManager.Stub {
             }
 
             // If this permission was granted by default, make sure it is.
-            if ((oldFlags & FLAG_PERMISSION_GRANTED_BY_DEFAULT) != 0) {
+            if ((oldFlags & FLAG_PERMISSION_GRANTED_BY_DEFAULT) != 0
+                    || Manifest.permission.INTERNET.equals(bp.name)) {
                 if (permissionsState.grantRuntimePermission(bp, userId)
                         != PERMISSION_OPERATION_FAILURE) {
                     writeRuntimePermissions = true;
