@@ -136,7 +136,7 @@ namespace android
     }
 
 
-    static JNINativeMethod method_table[] = {
+    static const JNINativeMethod method_table[] = {
         { "nativeMigrateToBoost",   "()I", (void*)migrateToBoost },
         { "nativeMigrateFromBoost", "()I", (void*)migrateFromBoost },
     };
