@@ -407,7 +407,7 @@ static jobject ExifInterface_getRawAttributesFromInputStream(
 
 // ----------------------------------------------------------------------------
 
-static JNINativeMethod gMethods[] = {
+static const JNINativeMethod gMethods[] = {
     { "nativeInitRaw", "()V", (void *)ExifInterface_initRaw },
     { "nativeGetThumbnailFromAsset", "(JII)[B", (void *)ExifInterface_getThumbnailFromAsset },
     { "nativeGetRawAttributesFromAsset", "(J)Ljava/util/HashMap;",
