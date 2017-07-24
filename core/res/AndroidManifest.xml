@@ -1785,7 +1785,7 @@
     <permission android:name="android.permission.SET_TIME_ZONE"
         android:label="@string/permlab_setTimeZone"
         android:description="@string/permdesc_setTimeZone"
-        android:protectionLevel="normal" />
+        android:protectionLevel="signature|privileged" />
 
     <!-- ==================================================== -->
     <!-- Permissions related to changing status bar   -->
