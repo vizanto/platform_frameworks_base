@@ -36,6 +36,7 @@ import com.android.systemui.qs.QSDetailItems.Item;
 import com.android.systemui.qs.QSIconView;
 import com.android.systemui.qs.QSTile;
 import com.android.systemui.qs.SignalTileView;
+import com.android.systemui.statusbar.policy.KeyguardMonitor;
 import com.android.systemui.statusbar.policy.NetworkController;
 import com.android.systemui.statusbar.policy.NetworkController.AccessPointController;
 import com.android.systemui.statusbar.policy.NetworkController.IconState;
@@ -47,6 +48,9 @@ import java.util.List;
 public class WifiTile extends QSTile<QSTile.SignalState> {
     private static final Intent WIFI_SETTINGS = new Intent(Settings.ACTION_WIFI_SETTINGS);
 
+    private final KeyguardMonitor mKeyguard;
+    private final KeyguardCallback mKeyguardCallback = new KeyguardCallback();
+
     private final NetworkController mController;
     private final AccessPointController mWifiController;
     private final WifiDetailAdapter mDetailAdapter;
@@ -56,6 +60,7 @@ public class WifiTile extends QSTile<QSTile.SignalState> {
 
     public WifiTile(Host host) {
         super(host);
+        mKeyguard = host.getKeyguardMonitor();
         mController = host.getNetworkController();
         mWifiController = mController.getAccessPointController();
         mDetailAdapter = new WifiDetailAdapter();
@@ -70,8 +75,10 @@ public class WifiTile extends QSTile<QSTile.SignalState> {
     public void setListening(boolean listening) {
         if (listening) {
             mController.addSignalCallback(mSignalCallback);
+            mKeyguard.addCallback(mKeyguardCallback);
         } else {
             mController.removeSignalCallback(mSignalCallback);
+            mKeyguard.removeCallback(mKeyguardCallback);
         }
     }
 
@@ -107,17 +114,28 @@ public class WifiTile extends QSTile<QSTile.SignalState> {
         mController.setWifiEnabled(!mState.value);
     }
 
+    private void handleClickInner() {
+        showDetail(true);
+        if (!mState.value) {
+            mController.setWifiEnabled(true);
+            mState.value = true;
+        }
+    }
+
     @Override
     protected void handleClick() {
         if (!mWifiController.canConfigWifi()) {
             mHost.startActivityDismissingKeyguard(new Intent(Settings.ACTION_WIFI_SETTINGS));
             return;
         }
-        showDetail(true);
-        if (!mState.value) {
-            mController.setWifiEnabled(true);
-            mState.value = true;
+        if (mKeyguard.isSecure() && mKeyguard.isShowing()) {
+            mHost.startRunnableDismissingKeyguard(() -> {
+                mHost.openPanels();
+                handleClickInner();
+            });
+            return;
         }
+        handleClickInner();
     }
 
     @Override
@@ -369,4 +387,11 @@ public class WifiTile extends QSTile<QSTile.SignalState> {
             mItems.setItems(items);
         }
     }
+
+    private final class KeyguardCallback implements KeyguardMonitor.Callback {
+        @Override
+        public void onKeyguardChanged() {
+            refreshState();
+        }
+    };
 }
