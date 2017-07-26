@@ -42,10 +42,13 @@ import com.android.systemui.BatteryMeterDrawable;
 import com.android.systemui.R;
 import com.android.systemui.qs.QSTile;
 import com.android.systemui.statusbar.policy.BatteryController;
+import com.android.systemui.statusbar.policy.KeyguardMonitor;
 
 import java.text.NumberFormat;
 
 public class BatteryTile extends QSTile<QSTile.State> implements BatteryController.BatteryStateChangeCallback {
+    private final KeyguardMonitor mKeyguard;
+    private final KeyguardCallback mKeyguardCallback = new KeyguardCallback();
 
     private final BatteryController mBatteryController;
     private final BatteryDetail mBatteryDetail = new BatteryDetail();
@@ -58,6 +61,7 @@ public class BatteryTile extends QSTile<QSTile.State> implements BatteryControll
 
     public BatteryTile(Host host) {
         super(host);
+        mKeyguard = host.getKeyguardMonitor();
         mBatteryController = host.getBatteryController();
     }
 
@@ -80,8 +84,10 @@ public class BatteryTile extends QSTile<QSTile.State> implements BatteryControll
     public void setListening(boolean listening) {
         if (listening) {
             mBatteryController.addStateChangedCallback(this);
+            mKeyguard.addCallback(mKeyguardCallback);
         } else {
             mBatteryController.removeStateChangedCallback(this);
+            mKeyguard.removeCallback(mKeyguardCallback);
         }
     }
 
@@ -100,6 +106,13 @@ public class BatteryTile extends QSTile<QSTile.State> implements BatteryControll
 
     @Override
     protected void handleClick() {
+        if (mKeyguard.isSecure() && mKeyguard.isShowing()) {
+            mHost.startRunnableDismissingKeyguard(() -> {
+                mHost.openPanels();
+                showDetail(true);
+            });
+            return;
+        }
         showDetail(true);
     }
 
@@ -299,4 +312,11 @@ public class BatteryTile extends QSTile<QSTile.State> implements BatteryControll
             }
         };
     }
+
+    private final class KeyguardCallback implements KeyguardMonitor.Callback {
+        @Override
+        public void onKeyguardChanged() {
+            refreshState();
+        }
+    };
 }
