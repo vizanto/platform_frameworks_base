@@ -36,6 +36,7 @@ import com.android.systemui.qs.QSDetailItems;
 import com.android.systemui.qs.QSDetailItems.Item;
 import com.android.systemui.qs.QSTile;
 import com.android.systemui.statusbar.policy.BluetoothController;
+import com.android.systemui.statusbar.policy.KeyguardMonitor;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,11 +45,15 @@ import java.util.Collection;
 public class BluetoothTile extends QSTile<QSTile.BooleanState>  {
     private static final Intent BLUETOOTH_SETTINGS = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
 
+    private final KeyguardMonitor mKeyguard;
+    private final KeyguardCallback mKeyguardCallback = new KeyguardCallback();
+
     private final BluetoothController mController;
     private final BluetoothDetailAdapter mDetailAdapter;
 
     public BluetoothTile(Host host) {
         super(host);
+        mKeyguard = host.getKeyguardMonitor();
         mController = host.getBluetoothController();
         mDetailAdapter = new BluetoothDetailAdapter();
     }
@@ -67,8 +72,10 @@ public class BluetoothTile extends QSTile<QSTile.BooleanState>  {
     public void setListening(boolean listening) {
         if (listening) {
             mController.addStateChangedCallback(mCallback);
+            mKeyguard.addCallback(mKeyguardCallback);
         } else {
             mController.removeStateChangedCallback(mCallback);
+            mKeyguard.removeCallback(mKeyguardCallback);
         }
     }
 
@@ -85,17 +92,28 @@ public class BluetoothTile extends QSTile<QSTile.BooleanState>  {
         return new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
     }
 
+    private void handleClickInner() {
+        showDetail(true);
+        if (!mState.value) {
+            mState.value = true;
+            mController.setBluetoothEnabled(true);
+        }
+    }
+
     @Override
     protected void handleClick() {
         if (!mController.canConfigBluetooth()) {
             mHost.startActivityDismissingKeyguard(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS));
             return;
         }
-        showDetail(true);
-        if (!mState.value) {
-            mState.value = true;
-            mController.setBluetoothEnabled(true);
+        if (mKeyguard.isSecure() && mKeyguard.isShowing()) {
+            mHost.startRunnableDismissingKeyguard(() -> {
+                mHost.openPanels();
+                handleClickInner();
+            });
+            return;
         }
+        handleClickInner();
     }
 
     @Override
@@ -293,4 +311,11 @@ public class BluetoothTile extends QSTile<QSTile.BooleanState>  {
             }
         }
     }
+
+    private final class KeyguardCallback implements KeyguardMonitor.Callback {
+        @Override
+        public void onKeyguardChanged() {
+            refreshState();
+        }
+    };
 }
