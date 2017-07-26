@@ -25,14 +25,18 @@ import com.android.systemui.R;
 import com.android.systemui.qs.QSTile;
 import com.android.systemui.statusbar.phone.SystemUIDialog;
 import com.android.systemui.statusbar.policy.DataSaverController;
+import com.android.systemui.statusbar.policy.KeyguardMonitor;
 
 public class DataSaverTile extends QSTile<QSTile.BooleanState> implements
         DataSaverController.Listener{
+    private final KeyguardMonitor mKeyguard;
+    private final KeyguardCallback mKeyguardCallback = new KeyguardCallback();
 
     private final DataSaverController mDataSaverController;
 
     public DataSaverTile(Host host) {
         super(host);
+        mKeyguard = host.getKeyguardMonitor();
         mDataSaverController = host.getNetworkController().getDataSaverController();
     }
 
@@ -45,8 +49,10 @@ public class DataSaverTile extends QSTile<QSTile.BooleanState> implements
     public void setListening(boolean listening) {
         if (listening) {
             mDataSaverController.addListener(this);
+            mKeyguard.addCallback(mKeyguardCallback);
         } else {
             mDataSaverController.remListener(this);
+            mKeyguard.removeCallback(mKeyguardCallback);
         }
     }
 
@@ -55,8 +61,7 @@ public class DataSaverTile extends QSTile<QSTile.BooleanState> implements
         return CellularTile.CELLULAR_SETTINGS;
     }
 
-    @Override
-    protected void handleClick() {
+    private void handleClickInner() {
         if (mState.value
                 || Prefs.getBoolean(mContext, Prefs.Key.QS_DATA_SAVER_DIALOG_SHOWN, false)) {
             // Do it right away.
@@ -78,6 +83,18 @@ public class DataSaverTile extends QSTile<QSTile.BooleanState> implements
         dialog.setShowForAllUsers(true);
         dialog.show();
         Prefs.putBoolean(mContext, Prefs.Key.QS_DATA_SAVER_DIALOG_SHOWN, true);
+    }
+
+    @Override
+    protected void handleClick() {
+        if (mKeyguard.isSecure() && mKeyguard.isShowing()) {
+            mHost.startRunnableDismissingKeyguard(() -> {
+                mHost.openPanels();
+                handleClickInner();
+            });
+            return;
+        }
+        handleClickInner();
     }
 
     private void toggleDataSaver() {
@@ -122,4 +139,11 @@ public class DataSaverTile extends QSTile<QSTile.BooleanState> implements
     public void onDataSaverChanged(boolean isDataSaving) {
         refreshState(isDataSaving);
     }
+
+    private final class KeyguardCallback implements KeyguardMonitor.Callback {
+        @Override
+        public void onKeyguardChanged() {
+            refreshState();
+        }
+    };
 }
