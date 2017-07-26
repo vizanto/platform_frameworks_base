@@ -189,4 +189,6 @@
     <integer name="def_end_button_behavior">0x2</integer>
 
     <bool name="def_text_show_password">false</bool>
+
+    <integer name="def_tether_dun_required">0</integer>
 </resources>
