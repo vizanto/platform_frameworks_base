@@ -222,4 +222,6 @@
     <bool name="def_add_users_from_lockscreen">false</bool>
 
     <bool name="def_text_show_password">false</bool>
+
+    <integer name="def_tether_dun_required">0</integer>
 </resources>
