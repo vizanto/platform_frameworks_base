@@ -373,7 +373,7 @@ static jobject JHwBinder_native_getService(
     return JHwRemoteBinder::NewObject(env, service);
 }
 
-static JNINativeMethod gMethods[] = {
+static const JNINativeMethod gMethods[] = {
     { "native_init", "()J", (void *)JHwBinder_native_init },
     { "native_setup", "()V", (void *)JHwBinder_native_setup },
 
