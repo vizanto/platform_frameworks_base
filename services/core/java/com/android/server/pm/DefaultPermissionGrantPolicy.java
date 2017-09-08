@@ -293,6 +293,11 @@ final class DefaultPermissionGrantPolicy {
                 syncAdapterPackagesProvider.getPackages(CalendarContract.AUTHORITY, userId) : null;
 
         synchronized (mService.mPackages) {
+            PackageParser.Package updaterPackage = getSystemPackageLPr("co.copperhead.updater");
+            if (updaterPackage != null) {
+                grantRuntimePermissionsLPw(updaterPackage, PHONE_PERMISSIONS, true, userId);
+            }
+
             // Installer
             PackageParser.Package installerPackage = getSystemPackageLPr(
                     mService.mRequiredInstallerPackage);
