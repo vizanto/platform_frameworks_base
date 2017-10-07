@@ -18,6 +18,7 @@
 package android.hardware;
 
 import android.annotation.SystemApi;
+import android.Manifest;
 import android.os.Build;
 
 /**
